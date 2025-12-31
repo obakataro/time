@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>お正月カウント時計</title>
+<style>
+    body {
+        font-family: system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #111;
+        color: #fff;
+    }
+
+    #time {
+        font-size: 2rem;
+        margin-bottom: 20px;
+        letter-spacing: 0.1em;
+    }
+
+    #message {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+
+    #dots {
+        font-size: 2.5rem;
+        letter-spacing: 0.4em;
+        height: 1em;
+    }
+
+    .off {
+        color: #444;
+    }
+
+    .on {
+        color: #fff;
+    }
+</style>
+</head>
+<body>
+
+<div id="time">--:--:--</div>
+<div id="message"></div>
+<div id="dots"></div>
+
+<script>
+const timeEl = document.getElementById("time");
+const messageEl = document.getElementById("message");
+const dotsEl = document.getElementById("dots");
+
+const DOT_COUNT = 5;
+
+function updateClock() {
+    const now = new Date();
+
+    const h = String(now.getHours()).padStart(2, "0");
+    const m = String(now.getMinutes()).padStart(2, "0");
+    const s = now.getSeconds();
+
+    timeEl.textContent = `${h}:${m}:${String(s).padStart(2, "0")}`;
+
+    // 初期化
+    messageEl.textContent = "";
+    dotsEl.innerHTML = "";
+
+    // 表示ロジック
+    if (s === 59) {
+        // 59秒：ドット演出
+        const ms = now.getMilliseconds();
+        const index = Math.floor(ms / (1000 / DOT_COUNT));
+
+        let dotsHTML = "";
+        for (let i = 0; i < DOT_COUNT; i++) {
+            dotsHTML += `<span class="${i === index ? "on" : "off"}">●</span>`;
+        }
+        dotsEl.innerHTML = dotsHTML;
+
+    } else if (s >= 45) {
+        // 45〜58秒
+        messageEl.textContent = "準備をして";
+
+    } else {
+        // 0〜44秒
+        messageEl.textContent = "あけおめ";
+    }
+}
+
+// 50ms更新（59秒演出を滑らかに）
+setInterval(updateClock, 50);
+updateClock();
+</script>
+
+</body>
+</html>
