@@ -15,15 +15,49 @@
         color: #fff;
     }
 
+    #clock {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        border: 4px solid #fff;
+        border-radius: 50%;
+        margin-bottom: 20px;
+    }
+
+    .hand {
+        position: absolute;
+        width: 50%;
+        height: 2px;
+        background: #fff;
+        top: 50%;
+        left: 50%;
+        transform-origin: 0% 50%;
+    }
+
+    .hour {
+        width: 35%;
+        height: 4px;
+    }
+
+    .minute {
+        width: 45%;
+        height: 3px;
+    }
+
+    .second {
+        background: #ff4444;
+        height: 1px; /* 細かい秒針 */
+    }
+
     #time {
         font-size: 2rem;
-        margin-bottom: 20px;
+        margin: 15px 0;
         letter-spacing: 0.1em;
     }
 
     #message {
         font-size: 2rem;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
 
     #dots {
@@ -32,22 +66,27 @@
         height: 1em;
     }
 
-    .off {
-        color: #444;
-    }
-
-    .on {
-        color: #fff;
-    }
+    .off { color: #444; }
+    .on { color: #fff; }
 </style>
 </head>
 <body>
+
+<div id="clock">
+    <div class="hand hour" id="hour"></div>
+    <div class="hand minute" id="minute"></div>
+    <div class="hand second" id="second"></div>
+</div>
 
 <div id="time">--:--:--</div>
 <div id="message"></div>
 <div id="dots"></div>
 
 <script>
+const hourHand = document.getElementById("hour");
+const minuteHand = document.getElementById("minute");
+const secondHand = document.getElementById("second");
+
 const timeEl = document.getElementById("time");
 const messageEl = document.getElementById("message");
 const dotsEl = document.getElementById("dots");
@@ -57,21 +96,36 @@ const DOT_COUNT = 5;
 function updateClock() {
     const now = new Date();
 
-    const h = String(now.getHours()).padStart(2, "0");
-    const m = String(now.getMinutes()).padStart(2, "0");
+    const h = now.getHours();
+    const m = now.getMinutes();
     const s = now.getSeconds();
+    const ms = now.getMilliseconds();
 
-    timeEl.textContent = `${h}:${m}:${String(s).padStart(2, "0")}`;
+    // デジタル
+    timeEl.textContent =
+        `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 
-    // 初期化
+    // アナログ（秒針はミリ秒込み）
+    const secondDeg = (s + ms / 1000) * 6;
+    const minuteDeg = (m + s / 60) * 6;
+    const hourDeg = (h % 12 + m / 60) * 30;
+
+    secondHand.style.transform = `rotate(${secondDeg}deg)`;
+    minuteHand.style.transform = `rotate(${minuteDeg}deg)`;
+    hourHand.style.transform = `rotate(${hourDeg}deg)`;
+
+    // 表示初期化
     messageEl.textContent = "";
     dotsEl.innerHTML = "";
 
-    // 表示ロジック
-    if (s === 59) {
-        // 59秒：ドット演出
-        const ms = now.getMilliseconds();
-        const index = Math.floor(ms / (1000 / DOT_COUNT));
+    // 表示制御
+    if (s >= 57) {
+        // 57〜59秒：ドット演出（3秒で5分割）
+        const progress = (s - 57) * 1000 + ms;
+        const index = Math.min(
+            DOT_COUNT - 1,
+            Math.floor(progress / (3000 / DOT_COUNT))
+        );
 
         let dotsHTML = "";
         for (let i = 0; i < DOT_COUNT; i++) {
@@ -80,17 +134,14 @@ function updateClock() {
         dotsEl.innerHTML = dotsHTML;
 
     } else if (s >= 45) {
-        // 45〜58秒
         messageEl.textContent = "準備をして";
-
     } else {
-        // 0〜44秒
         messageEl.textContent = "あけおめ";
     }
 }
 
-// 50ms更新（59秒演出を滑らかに）
-setInterval(updateClock, 50);
+// 16ms更新（秒針ヌルヌル）
+setInterval(updateClock, 16);
 updateClock();
 </script>
 
